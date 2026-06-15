@@ -25,7 +25,8 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       if (req.file.path && req.file.path.startsWith('http')) {
         imageUrl = req.file.path;
       } else if (req.file.filename) {
-        imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        imageUrl = `${protocol}://${req.get('host')}/uploads/${req.file.filename}`;
       }
     }
 
