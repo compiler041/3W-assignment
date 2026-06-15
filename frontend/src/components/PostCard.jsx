@@ -32,13 +32,22 @@ const PostCard = ({ post: initialPost }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { user } = useContext(AuthContext);
+  const { user, updateFollowing } = useContext(AuthContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const isLiked = post.likes.includes(user?.username);
   const rank = getRank(post.username, isDark);
   const color = getColor(post.username);
+  const isFollowing = user?.following?.includes(post.username);
+
+  const handleFollow = async () => {
+    if (post.username === user.username) return;
+    try {
+      const res = await api.post(`/users/${post.username}/follow`);
+      updateFollowing(res.data.following);
+    } catch (err) { console.error(err); }
+  };
 
   const handleLike = async () => {
     const updated = isLiked
@@ -114,17 +123,22 @@ const PostCard = ({ post: initialPost }) => {
           </Box>
 
           {/* Follow */}
-          <Box
-            sx={{
-              display: 'flex', alignItems: 'center', gap: '2px',
-              bgcolor: '#2979ff', color: 'white',
-              borderRadius: 20, px: '12px', py: '5px',
-              fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              '&:hover': { bgcolor: '#1565c0' },
-            }}
-          >
-            Follow <AddRoundedIcon sx={{ fontSize: 15 }} />
-          </Box>
+          {post.username !== user?.username && (
+            <Box
+              onClick={handleFollow}
+              sx={{
+                display: 'flex', alignItems: 'center', gap: '2px',
+                bgcolor: isFollowing ? 'transparent' : '#2979ff',
+                color: isFollowing ? 'text.secondary' : 'white',
+                border: isFollowing ? `1px solid ${theme.palette.divider}` : '1px solid #2979ff',
+                borderRadius: 20, px: '12px', py: '5px',
+                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                '&:hover': { bgcolor: isFollowing ? (isDark ? '#333' : '#eee') : '#1565c0' },
+              }}
+            >
+              {isFollowing ? 'Following' : 'Follow'} {!isFollowing && <AddRoundedIcon sx={{ fontSize: 15 }} />}
+            </Box>
+          )}
         </Box>
 
         {/* Content */}

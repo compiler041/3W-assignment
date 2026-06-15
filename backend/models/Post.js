@@ -32,11 +32,10 @@ const postSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Ensure that a post has at least content or imageUrl
-postSchema.pre('save', function(next) {
+postSchema.pre('save', function() {
   if (!this.content && !this.imageUrl) {
-    return next(new Error('Post must have either content or an image.'));
+    throw new Error('Post must have either content or an image.');
   }
-  next();
 });
 
 module.exports = mongoose.model('Post', postSchema);

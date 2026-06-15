@@ -8,14 +8,17 @@ import TopHeader from '../components/TopHeader';
 import CreatePost from '../components/CreatePost';
 import PostCard from '../components/PostCard';
 import api from '../api';
+import { AuthContext } from '../context/AuthContext';
 
 const filterOptions = ['All Post', 'For You', 'Most Liked', 'Most Commented'];
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All Post');
   const theme = useTheme();
+  const { user, updateFollowing } = React.useContext(AuthContext);
 
   const fetchPosts = async () => {
     try {
@@ -25,9 +28,26 @@ const Feed = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  const fetchSuggestedUsers = async () => {
+    try {
+      const res = await api.get('/users/suggested');
+      setSuggestedUsers(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  useEffect(() => { 
+    fetchPosts(); 
+    fetchSuggestedUsers();
+  }, []);
 
   const handlePostCreated = (newPost) => { setPosts([newPost, ...posts]); };
+
+  const handleFollow = async (username) => {
+    try {
+      const res = await api.post(`/users/${username}/follow`);
+      updateFollowing(res.data.following);
+    } catch (err) { console.error(err); }
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -146,28 +166,29 @@ const Feed = () => {
 
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, p: 2.5, border: `1px solid ${theme.palette.divider}` }}>
             <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary', mb: 2 }}>Suggested Users</Typography>
-            {[
-              { name: 'Keshav', handle: '@keshav3w', rank: 'Legend' },
-              { name: 'Priya', handle: '@priyasheth', rank: 'Gold' },
-              { name: 'Rahul', handle: '@rahuldev', rank: 'Silver' },
-            ].map((u, i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            {suggestedUsers.map((u, i) => (
+              <Box key={u._id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-                  <Avatar sx={{ width: 34, height: 34, fontSize: 13, fontWeight: 700, bgcolor: ['#2979ff', '#e91e63', '#ff6d00'][i], color: 'white' }}>
-                    {u.name.charAt(0)}
+                  <Avatar sx={{ width: 34, height: 34, fontSize: 13, fontWeight: 700, bgcolor: ['#2979ff', '#e91e63', '#ff6d00', '#00897b', '#9c27b0'][i % 5], color: 'white' }}>
+                    {u.username.charAt(0).toUpperCase()}
                   </Avatar>
                   <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>{u.name}</Typography>
-                    <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{u.handle}</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>{u.username}</Typography>
+                    <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>@{u.username.toLowerCase()}</Typography>
                   </Box>
                 </Box>
-                <Box sx={{
-                  fontSize: 11, fontWeight: 700, color: '#2979ff',
-                  border: '1px solid #2979ff', borderRadius: 10,
+                <Box 
+                  onClick={() => handleFollow(u.username)}
+                  sx={{
+                  fontSize: 11, fontWeight: 700, 
+                  color: user?.following?.includes(u.username) ? 'text.secondary' : '#2979ff',
+                  border: user?.following?.includes(u.username) ? `1px solid ${theme.palette.divider}` : '1px solid #2979ff',
+                  bgcolor: user?.following?.includes(u.username) ? 'transparent' : 'transparent',
+                  borderRadius: 10,
                   px: 1.2, py: 0.3, cursor: 'pointer',
-                  '&:hover': { bgcolor: theme.palette.mode === 'dark' ? '#003366' : '#e3f2fd' },
+                  '&:hover': { bgcolor: user?.following?.includes(u.username) ? (theme.palette.mode === 'dark' ? '#333' : '#eee') : (theme.palette.mode === 'dark' ? '#003366' : '#e3f2fd') },
                 }}>
-                  Follow
+                  {user?.following?.includes(u.username) ? 'Following' : 'Follow'}
                 </Box>
               </Box>
             ))}

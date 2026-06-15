@@ -7,16 +7,21 @@ dotenv.config();
 
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
+const userRoutes = require('./routes/users');
 
 const app = express();
+
+const path = require('path');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/users', userRoutes);
 
 // Connect to MongoDB
 const PORT = process.env.PORT || 5000;

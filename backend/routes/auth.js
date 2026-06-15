@@ -28,7 +28,7 @@ router.post('/signup', async (req, res) => {
     });
 
     const savedUser = await newUser.save();
-    res.status(201).json({ message: 'User created successfully', user: { id: savedUser._id, username: savedUser.username }});
+    res.status(201).json({ message: 'User created successfully', user: { id: savedUser._id, username: savedUser.username, email: savedUser.email, following: savedUser.following }});
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -59,7 +59,8 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        following: user.following
       }
     });
   } catch (err) {

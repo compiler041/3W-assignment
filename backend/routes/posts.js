@@ -21,9 +21,12 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     const { content } = req.body;
     let imageUrl = '';
     
-    // Cloudinary might throw an error if keys are "placeholder". We should handle that gracefully.
-    if (req.file && req.file.path) {
-      imageUrl = req.file.path;
+    if (req.file) {
+      if (req.file.path && req.file.path.startsWith('http')) {
+        imageUrl = req.file.path;
+      } else if (req.file.filename) {
+        imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+      }
     }
 
     if (!content && !imageUrl) {
